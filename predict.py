@@ -11,7 +11,7 @@ def load_and_preprocess_image(image_path):
     return img_array
 
 print("Loading model...")
-model = tf.keras.models.load_model('breast_cancer_model.keras')
+model = tf.keras.models.load_model('final_breast_cancer_model.keras')
 print("Model loaded successfully!")
 
 while True:
@@ -26,11 +26,10 @@ while True:
         prediction = model.predict(processed_image, verbose=0)
         
         probability = prediction[0][0]
-        prediction_class = "Cancer" if probability >= 0.5 else "Non-Cancer"
+        prediction_class = "Non-Cancer" if probability >= 0.5 else "Cancer"
         
         print(f"\nResult:")
         print(f"Prediction: {prediction_class}")
-        print(f"Probability: {probability:.2%}")
         
     except FileNotFoundError:
         print(f"Error: The file '{image_path}' was not found.")

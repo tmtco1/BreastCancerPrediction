@@ -1,4 +1,4 @@
 .env
-datset/
+datset
 best_model.keras
 final_breast_cancer_model.keras
