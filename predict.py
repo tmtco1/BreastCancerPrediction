@@ -12,6 +12,7 @@ print("Loading model...")
 model = tf.keras.models.load_model('final_breast_cancer_model.keras')
 print("Model loaded successfully!")
 
+
 def load_and_preprocess_image(image_path):
     img = Image.open(image_path).convert('RGB')
     img = img.resize((224, 224))
