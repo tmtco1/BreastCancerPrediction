@@ -1,6 +1,16 @@
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 import tensorflow as tf
 import numpy as np
 from PIL import Image
+import os
+
+app = Flask(__name__)
+CORS(app)
+
+print("Loading model...")
+model = tf.keras.models.load_model('final_breast_cancer_model.keras')
+print("Model loaded successfully!")
 
 def load_and_preprocess_image(image_path):
     img = Image.open(image_path).convert('RGB')
@@ -10,28 +20,33 @@ def load_and_preprocess_image(image_path):
     img_array = np.expand_dims(img_array, axis=0)
     return img_array
 
-print("Loading model...")
-model = tf.keras.models.load_model('final_breast_cancer_model.keras')
-print("Model loaded successfully!")
+@app.route('/predict', methods=['POST'])
+def predict():
+    if 'image' not in request.files:
+        return jsonify({"error": "No image file provided."}), 400
 
-while True:
-    image_path = input("\nEnter image path (or 'x' to exit): ")
-    
-    if image_path.lower() == 'x':
-        print("Exiting program...")
-        break
-    
+    image_file = request.files['image']
+
     try:
-        processed_image = load_and_preprocess_image(image_path)
+        temp_path = os.path.join("/tmp", image_file.filename)
+        image_file.save(temp_path)
+
+        processed_image = load_and_preprocess_image(temp_path)
+
         prediction = model.predict(processed_image, verbose=0)
-        
-        probability = prediction[0][0]
-        prediction_class = "Non-Cancer" if probability >= 0.5 else "Cancer"
-        
-        print(f"\nResult:")
-        print(f"Prediction: {prediction_class}")
-        
-    except FileNotFoundError:
-        print(f"Error: The file '{image_path}' was not found.")
+        probability = 1 - prediction[0][0]
+
+        prediction_class = "Cancer" if probability >= 0.5 else "Non-Cancer"
+
+        os.remove(temp_path)
+
+        return jsonify({
+            "prediction": prediction_class,
+            "probability": float(probability)
+        })
+
     except Exception as e:
-        print(f"Error during prediction: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
